@@ -11,11 +11,14 @@ const { default: packageJson } = await import("../package.json", {
   with: { type: "json" },
 });
 process.env.REA_PACKAGE_VERSION = packageJson.version;
+const isExtrasMode = args[0] === "extras";
 const isMcpMode =
   args.length === 1 && (args[0] === "--mcp" || args[0] === "mcp");
 const isMcpDoctorMode = args[0] === "mcp" && args[1] === "doctor";
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const runtimeFiles = isMcpMode
+const runtimeFiles = isExtrasMode
+  ? []
+  : isMcpMode
   ? ["dist/main.js"]
   : isMcpDoctorMode
     ? ["dist/main.js", "dist/mcpDoctor.js"]
@@ -26,6 +29,8 @@ if (!(await compiledRuntimeExists(runtimeFiles))) {
     `REA's compiled runtime is missing. Run \`npm ci\` in ${packageRoot} to install dependencies and build REA, then restart it. If this is an installed package, reinstall rea-agents.\n`,
   );
   process.exitCode = 1;
+} else if (isExtrasMode) {
+  await import("../skills/reverse-engineer-anything/scripts/rea-extras.mjs");
 } else if (isMcpMode) {
   const { runEntrypoint } = await import("../dist/main.js");
   await runEntrypoint();

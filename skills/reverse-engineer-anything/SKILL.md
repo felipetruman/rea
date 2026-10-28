@@ -66,6 +66,9 @@ policy requires it; approval never broadens a different authority boundary.
 - Controlled JavaScript replay:
   [references/controlled-replay.md](references/controlled-replay.md)
 
+- LeanREA-inspired fast triage and optional Ablation CLI:
+  [references/leanrea-fast-paths.md](references/leanrea-fast-paths.md)
+
 ## Readiness and setup
 
 If REA tools are available, use them directly; do not run `doctor` on every
