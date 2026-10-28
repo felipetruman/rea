@@ -1,0 +1,29 @@
+name: Temporary extras formatter
+on:
+  push:
+    branches:
+      - feat/leanrea-ablation-optional-bridges
+permissions:
+  contents: write
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npx --no-install prettier --write skills/reverse-engineer-anything/scripts/rea-extras.mjs tests/extras-integration.test.mjs
+      - name: Commit formatting changes
+        run: |
+          if ! git diff --quiet -- skills/reverse-engineer-anything/scripts/rea-extras.mjs tests/extras-integration.test.mjs; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add skills/reverse-engineer-anything/scripts/rea-extras.mjs tests/extras-integration.test.mjs
+            git commit -m "style: apply Prettier to optional REA extras"
+            git push origin HEAD:feat/leanrea-ablation-optional-bridges
+          fi
