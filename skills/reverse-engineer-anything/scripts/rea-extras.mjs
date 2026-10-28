@@ -1,12 +1,12 @@
 #!/usr/bin/env node
-// Optional CLI bridge: LeanREA-inspired triage + Ablation via F1 provider. No MCP change.
+// Optional CLI bridge: LeanREA-inspired triage + external Ablation. No MCP change.
+import { spawn } from "node:child_process";
 import { open, realpath, stat } from "node:fs/promises";
 import { extname, relative, resolve, sep } from "node:path";
-import { AblationProvider } from "../../../dist/ablation/AblationProvider.js";
-import { diagnoseAblation } from "../../../dist/ablation/AblationDoctor.js";
+
 const raw = process.argv.slice(2);
 const args = raw[0] === "extras" ? raw.slice(1) : raw;
-// const LIMIT = 2 * 1024 * 1024;
+const LIMIT = 2 * 1024 * 1024;
 function fatal(message) {
   process.stderr.write("REA extras: " + message + "\n");
   process.exitCode = 1;
@@ -110,80 +110,81 @@ function suggestions(t) {
     "select specialized analyzer",
   ];
 }
-async function executeAblationViaProvider(action, targetPath, param, timeout) {
-  try {
-    const executable = process.env.REA_ABLATION_BIN || "ablation";
-    const doctor = await diagnoseAblation({ executable });
-    if (!doctor.ok) {
-      return {
-        ok: false,
-        code: 1,
-        stdout: "",
-        stderr: doctor.error?.message || "Ablation unavailable",
-        reason: "ablation-unavailable",
-      };
+function invoke(command, argv, timeout) {
+  return new Promise((finish) => {
+    const env = {};
+    for (const k of [
+      "PATH",
+      "HOME",
+      "TMPDIR",
+      "TEMP",
+      "TMP",
+      "LANG",
+      "LC_ALL",
+      "VIRTUAL_ENV",
+      "XDG_CACHE_HOME",
+      "SSL_CERT_FILE",
+      "REQUESTS_CA_BUNDLE",
+    ])
+      if (process.env[k] !== undefined) env[k] = process.env[k];
+    if (process.env.REA_EXTRAS_ALLOW_MODEL_DOWNLOAD !== "1") {
+      env.HF_HUB_OFFLINE = "1";
+      env.TRANSFORMERS_OFFLINE = "1";
     }
-    const provider = new AblationProvider(doctor.value, {
-      executable,
-      approvedRoots: JSON.parse(
-        process.env.REA_INVESTIGATION_INPUT_ROOTS_JSON || "[]",
-      ),
-      timeoutMs: timeout,
+    const proc = spawn(command, argv, {
+      shell: false,
+      env,
+      windowsHide: true,
+      stdio: ["ignore", "pipe", "pipe"],
     });
-    let result;
-    switch (action) {
-      case "analyze":
-      case "taint":
-      case "fmtstr": {
-        result = await provider[action === "fmtstr" ? "analyze" : action]({
-          target_path: targetPath,
-        });
-        break;
+    let stdout = "",
+      stderr = "",
+      bytes = 0,
+      failure = "",
+      finished = false;
+    const collect = (chunk, isOut) => {
+      bytes += chunk.length;
+      if (bytes > LIMIT) {
+        failure = "Output exceeded 2 MiB";
+        proc.kill("SIGKILL");
+        return;
       }
-      case "search": {
-        result = await provider.search({
-          target_path: targetPath,
-          query: param,
-        });
-        break;
-      }
-      case "profile":
-      case "window":
-      case "cfg": {
-        result = await provider.profile({
-          target_path: targetPath,
-          address: param,
-        });
-        break;
-      }
-      default: {
-        throw Error("Unknown action: " + action);
-      }
-    }
-    if (!result.ok) {
-      return {
-        ok: false,
-        code: 1,
-        stdout: "",
-        stderr: result.error?.message || "Ablation error",
-        reason: "provider-error",
-      };
-    }
-    return {
-      ok: true,
-      code: 0,
-      stdout: JSON.stringify(result.value, null, 2),
-      stderr: "",
+      if (isOut) stdout += chunk.toString("utf8");
+      else stderr += chunk.toString("utf8");
     };
-  } catch (e) {
-    return {
-      ok: false,
-      code: 1,
-      stdout: "",
-      stderr: e?.message || String(e),
-      reason: "execution-error",
-    };
-  }
+    proc.stdout.on("data", (v) => collect(v, true));
+    proc.stderr.on("data", (v) => collect(v, false));
+    const timer = setTimeout(() => {
+      failure = "Timeout";
+      proc.kill("SIGKILL");
+    }, timeout);
+    proc.once("error", (err) => {
+      if (!finished) {
+        finished = true;
+        clearTimeout(timer);
+        finish({
+          ok: false,
+          code: 1,
+          stdout,
+          stderr: err.message,
+          reason: "spawn-failed",
+        });
+      }
+    });
+    proc.once("close", (code) => {
+      if (!finished) {
+        finished = true;
+        clearTimeout(timer);
+        finish({
+          ok: code === 0 && !failure,
+          code: code ?? 1,
+          stdout,
+          stderr,
+          reason: failure,
+        });
+      }
+    });
+  });
 }
 function print(x, json) {
   process.stdout.write(
@@ -194,24 +195,23 @@ function print(x, json) {
         : JSON.stringify(x, null, 2) + "\n",
   );
 }
-// oxlint-disable-next-line complexity
 async function main() {
   const json = args.includes("--json"),
     a = args.filter((x) => x !== "--json");
   if (a.length === 0 || ["help", "-h", "--help"].includes(a[0])) return help();
   if (a[0] === "doctor") {
     if (a.length !== 1) throw Error("Expected rea extras doctor [--json]");
-    const executable = process.env.REA_ABLATION_BIN || "ablation";
-    const doctor = await diagnoseAblation({ executable });
+    const bin = process.env.REA_ABLATION_BIN || "ablation";
+    const r = await invoke(bin, ["--help"], 8000);
     return print(
       {
         leanrea: { available: true, mode: "bundled skill" },
         ablation: {
-          available: doctor.ok,
-          executable,
-          diagnostic: doctor.ok
+          available: r.ok,
+          executable: bin,
+          diagnostic: r.ok
             ? "CLI detected"
-            : doctor.error?.message || "Ablation unavailable",
+            : r.reason || r.stderr.slice(0, 200),
         },
         automaticInstall: false,
       },
@@ -261,11 +261,9 @@ async function main() {
   const timeout = Number.isFinite(n)
     ? Math.min(600000, Math.max(1000, n))
     : 120000;
-  const param = count === 2 ? a[3] : undefined;
-  const result = await executeAblationViaProvider(
-    action,
-    t.file,
-    param,
+  const result = await invoke(
+    process.env.REA_ABLATION_BIN || "ablation",
+    pass,
     timeout,
   );
   if (json)
