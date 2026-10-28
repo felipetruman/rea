@@ -16,13 +16,12 @@ const isMcpMode =
   args.length === 1 && (args[0] === "--mcp" || args[0] === "mcp");
 const isMcpDoctorMode = args[0] === "mcp" && args[1] === "doctor";
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const runtimeFiles = isExtrasMode
-  ? []
-  : isMcpMode
+const normalRuntimeFiles = isMcpMode
   ? ["dist/main.js"]
   : isMcpDoctorMode
     ? ["dist/main.js", "dist/mcpDoctor.js"]
     : ["dist/cli.js", "dist/cliOutput.js"];
+const runtimeFiles = isExtrasMode ? [] : normalRuntimeFiles;
 
 if (!(await compiledRuntimeExists(runtimeFiles))) {
   process.stderr.write(
