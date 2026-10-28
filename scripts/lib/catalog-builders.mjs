@@ -57,6 +57,11 @@ export const toolFamilyCatalog = (sources) => {
       contracts: sources.applicationContracts.APPLICATION_TOOL_CONTRACTS,
     },
     {
+      id: "ablation",
+      surface: "auxiliary-provider",
+      contracts: sources.ablationContracts.ABLATION_TOOL_CONTRACTS,
+    },
+    {
       id: "session",
       surface: "session",
       contracts: sources.toolContracts.SESSION_TOOL_CONTRACTS,

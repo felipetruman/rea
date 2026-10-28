@@ -209,6 +209,13 @@ export const TOOL_EFFECTS: Readonly<Record<string, ToolEffects>> = {
   record_unknown: effects({ mutatesSession: true, idempotent: false }),
   update_unknown: effects({ mutatesSession: true, idempotent: false }),
   verify_unknown_resolution: effects(),
+  ablation_analyze: effects({ launchesProcess: true, idempotent: false }),
+  ablation_search: effects({ launchesProcess: true, idempotent: false }),
+  ablation_taint: effects({ launchesProcess: true, idempotent: false }),
+  ablation_function_profile: effects({
+    launchesProcess: true,
+    idempotent: false,
+  }),
 };
 
 /** Derive MCP annotations without tool-name or tool-family heuristics. */

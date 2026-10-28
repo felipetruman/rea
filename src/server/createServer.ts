@@ -20,6 +20,7 @@ import type {
   JavaScriptReplayRunner,
 } from "../application/JavaScriptReplayPlanning.js";
 import type { JavaScriptRuntimeObservationPort } from "../application/JavaScriptRuntimeObservationPort.js";
+import type { AblationObservationPort } from "../application/AblationObservationPort.js";
 import type { ManagedRuntimePolicy } from "../application/ManagedRuntimeCorrelationService.js";
 import { MANAGED_RUNTIME_DISABLED } from "../application/ManagedRuntimeCorrelationService.js";
 import type { PermissionAuthority } from "../application/PermissionAuthority.js";
@@ -34,6 +35,7 @@ import {
   PROCESS_CAPTURE_ELICITATION_POLICY,
   type ProcessCaptureElicitationState,
 } from "./ProcessCaptureElicitation.js";
+import { registerAblationTools } from "./registerAblationTools.js";
 import { registerApplicationTools } from "./registerApplicationTools.js";
 import { registerArtifactTools } from "./registerArtifactTools.js";
 import { registerBrowserScenarioTool } from "./registerBrowserScenarioTool.js";
@@ -73,6 +75,7 @@ export interface CreateServerOptions {
   readonly electronObservation?: ElectronObservationPort;
   readonly electronActiveObservation?: ElectronActiveObservationPort;
   readonly javascriptRuntimeObservation?: JavaScriptRuntimeObservationPort;
+  readonly ablationObservation?: AblationObservationPort;
   readonly artifactIntegrityContinueEnabled?: () => boolean;
   readonly javascriptReplayPolicy?: () => JavaScriptReplayPolicy;
   readonly javascriptReplayHost?: JavaScriptReplayHost;
@@ -371,6 +374,11 @@ const registerObservationTools = ({
         options.javascriptReplayRunner ?? new LinuxJavaScriptReplayRunner(),
       authority: permissionAuthority,
     },
+  });
+  registerAblationTools(server, {
+    logger,
+    ablation: options.ablationObservation,
+    recordEvidence,
   });
 };
 

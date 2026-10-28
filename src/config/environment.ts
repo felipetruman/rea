@@ -108,6 +108,7 @@ const environmentSchema = z
       .min(1)
       .refine(isAbsolute, "REA_JAVASCRIPT_REPLAY_SHELL_PATH must be absolute")
       .default("/usr/bin/bash"),
+    REA_ABLATION_MCP_ENABLED: z.enum(["true", "false"]).default("false"),
     REA_MANAGED_RUNTIME_ENABLED: z.enum(["true", "false"]).default("false"),
     REA_MANAGED_RUNTIME_ROOTS_JSON: z.string().default("[]"),
     REA_MANAGED_RUNTIME_EXECUTABLE_PATH: z

@@ -66,4 +66,11 @@ export const TOOL_EXAMPLE_OVERRIDES: Readonly<
     left_bundle_path: "/approved/left-evidence.json",
     right_bundle_path: "/approved/right-evidence.json",
   },
+  ablation_analyze: { target_path: "/approved/target.elf" },
+  ablation_search: { target_path: "/approved/target.elf", query: "crypto" },
+  ablation_taint: { target_path: "/approved/target.elf" },
+  ablation_function_profile: {
+    target_path: "/approved/target.elf",
+    address: "0x401000",
+  },
 };
