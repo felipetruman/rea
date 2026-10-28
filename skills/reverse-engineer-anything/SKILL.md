@@ -3,8 +3,8 @@ name: reverse-engineer-anything
 description: Reverse engineer native, managed, Electron/JavaScript, packaged, and browser applications with REA. Use shipped-artifact or approved runtime evidence to explain features, compare versions, decompile code, or guide a reconstruction. Skip REA for ordinary source-repository architecture analysis.
 metadata:
   version: "23"
-  tool_count: 116
-  catalog_digest: "6624247db5bcf7b52ce53173bbc0ac11bd51e9217e9e3be4298b755bcc60ea50"
+  tool_count: 120
+  catalog_digest: "cf8bd4809f4734eade42600fb86bbfb04cc8c43ce66ada095ebfbfa8c0fa9ad6"
 ---
 
 # REA
@@ -65,6 +65,9 @@ policy requires it; approval never broadens a different authority boundary.
   [references/evidence-workflows.md](references/evidence-workflows.md)
 - Controlled JavaScript replay:
   [references/controlled-replay.md](references/controlled-replay.md)
+
+- LeanREA-inspired fast triage and optional Ablation CLI:
+  [references/leanrea-fast-paths.md](references/leanrea-fast-paths.md)
 
 ## Readiness and setup
 

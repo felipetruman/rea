@@ -14,6 +14,7 @@ import { BROWSER_PROVIDER_TOOL_CONTRACTS } from "./browserProviderToolContracts.
 import { ELECTRON_TOOL_CONTRACTS } from "./electronToolContracts.js";
 import { JAVASCRIPT_RUNTIME_OBSERVATION_TOOL_CONTRACTS } from "./javascriptRuntimeObservationToolContracts.js";
 import { APPLICATION_TOOL_CONTRACTS } from "./applicationToolContracts.js";
+import { ABLATION_TOOL_CONTRACTS } from "./ablationToolContracts.js";
 import {
   addressContextInputSchema,
   artifactComparisonInputSchema,
@@ -505,5 +506,6 @@ export const TOOL_CONTRACTS = [
   ...ELECTRON_TOOL_CONTRACTS,
   ...JAVASCRIPT_RUNTIME_OBSERVATION_TOOL_CONTRACTS,
   ...APPLICATION_TOOL_CONTRACTS,
+  ...ABLATION_TOOL_CONTRACTS,
   ...SESSION_TOOL_CONTRACTS,
 ] as const;

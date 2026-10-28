@@ -42,7 +42,7 @@ export const TEST_PROJECTS = [
     name: "adapters",
     include: [
       "src/*.test.ts",
-      "src/{artifacts,browser,dotnet,ghidra,hopper,native,process,reference,replay,server}/**/*.test.ts",
+      "src/{ablation,artifacts,browser,dotnet,ghidra,hopper,native,process,reference,replay,server}/**/*.test.ts",
     ],
     pool: "forks" as const,
     maxWorkers: MAX_TEST_WORKERS,
